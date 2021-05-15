@@ -3,9 +3,11 @@
 # Forked at: https://github.com/jameskeenan295/autoflashgui
 # Distributed under GPLv3
 # Credits to DanielO for the initial work on using SRPv6 to log into these modems (see links below)
-# 
+#
 # Please see the comments in autoflashgui.py for full details
 
+import werkzeug
+werkzeug.cached_property = werkzeug.utils.cached_property
 import mysrp as srp
 from urllib.parse import urlencode
 import binascii, json, time, sys, traceback, datetime
@@ -32,7 +34,7 @@ def srp6authenticate(br, host, username, password):
         usr = srp.User(username, password, hash_alg = srp.SHA256, ng_type = srp.NG_2048)
         uname, A = usr.start_authentication()
         debugData.append(_("A value ") + str(binascii.hexlify(A)))
-        
+
         br.open('http://' + host + '/authenticate', method='post', data = urlencode({'CSRFtoken' : token, 'I' : uname, 'A' : binascii.hexlify(A)}))
         debugData.append("br.response " + str(br.response))
         j = json.decoder.JSONDecoder().decode(br.parsed.decode())
@@ -47,11 +49,11 @@ def srp6authenticate(br, host, username, password):
 
         if 'error' in j:
             raise Exception(_("Unable to authenticate (check password?), message:"), j)
-        
+
         usr.verify_session(binascii.unhexlify(j['M']))
         if not usr.authenticated():
             raise Exception(_("Unable to authenticate"))
-        
+
         print('{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()) + ' Authentication successful' + token)
         return True
 
@@ -60,7 +62,7 @@ def srp6authenticate(br, host, username, password):
         print('{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()) + ' ' + _("Exception: ") + str(sys.exc_info()[0]))
         traceback.print_exc()
         raise
-        
+
 def runCommand(br, host, token, activeMethod, activeCommand, ddnsService):
     if activeMethod == 'Ping':
         postdata = {'CSRFtoken': token, 'action': 'PING', 'ipAddress': ':::::::;' + activeCommand, 'NumberOfRepetitions': '3', 'DataBlockSize': '64'}
@@ -74,8 +76,8 @@ def runCommand(br, host, token, activeMethod, activeCommand, ddnsService):
         urlpostfix = '/modals/wanservices-modal.lp'
     elif activeMethod == 'BasicDDNS':
         postdata = {
-            'ddns_enabled':['_DUMMY_', '_TRUE_'], 
-            'ddns_service_name':ddnsService, 
+            'ddns_enabled':['_DUMMY_', '_TRUE_'],
+            'ddns_service_name':ddnsService,
             'ddns_domain': ':::::::;' + activeCommand,
             'ddns_username':'invalid',
             'ddns_password':'invalid',
@@ -109,12 +111,12 @@ def runCommand(br, host, token, activeMethod, activeCommand, ddnsService):
         urlpostfix = '/modals/internet/dns_ddns.lp'
     else:
         raise Exception(_("Unknown method ") + activeMethod + _(" please check input in GUI"))
-    
+
     print('{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()) + " Sending command: " + activeCommand)
     r = br.session.post('http://' + host + urlpostfix, data=postdata)
     print('{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()) + ' Response: ' + str(br.response))
     br._update_state(r)
-    
+
     return br.response.ok
 
 

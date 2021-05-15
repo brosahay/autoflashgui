@@ -4,12 +4,14 @@
 # Requirements:
 # python 3 (developed on 3.7.1 x64)
 # pip install robobrowser
-# mysrp as from https://forums.whirlpool.net.au/user/20499  https://forums.whirlpool.net.au/forum-replies.cfm?t=2596180 https://gist.github.com/DanielO/76c6c337ff09f6011f408427df376e68 
+# mysrp as from https://forums.whirlpool.net.au/user/20499  https://forums.whirlpool.net.au/forum-replies.cfm?t=2596180 https://gist.github.com/DanielO/76c6c337ff09f6011f408427df376e68
 # a copy of the firmware file in the firmware directory
 # Multilanguage interface code based on adbtools2 program code
 # adbtools home page: https://github.com/digiampietro/adbtools2
 # Please see defaults.ini for the settings.
 
+import werkzeug
+werkzeug.cached_property = werkzeug.utils.cached_property
 import tkinter as tk
 import os, sys, time, socket, tkinter.filedialog, liblang, libautoflashgui
 from pathlib import Path
@@ -118,7 +120,7 @@ class Application(tk.Frame):
         self.methodActionListText = ['Ping', 'AdvancedDDNS', 'BasicDDNS']
         self.methodActionList = tk.StringVar()
         self.methodAction = tk.OptionMenu(self, self.methodActionList, *self.methodActionListText)
-        self.methodActionList.set(defaultMethods[self.defaultList.get()][0])        
+        self.methodActionList.set(defaultMethods[self.defaultList.get()][0])
         self.methodAction.config(state='disabled')
         self.methodAction.grid(row=rowOffset, column=2, sticky=tk.W)
         rowOffset += spacing
@@ -142,7 +144,7 @@ class Application(tk.Frame):
         tk.Label(self, text=_('Status:')).grid(row=rowOffset, column=1, sticky=tk.W)
         self.status = tk.Label(self, text=_('Check the console window for detailed status or major failures (exceptions - try re-running a few times)'), width=w, height=5, anchor=tk.W, justify=tk.LEFT, wraplength=400)
         self.status.grid(row=rowOffset, column=2, sticky=tk.W)
-        
+
         self.commandChange()
         self.expertModeSwitch()
         return
@@ -198,7 +200,7 @@ class Application(tk.Frame):
             maxLen = max([len(l) for l in [s for s in self.command.get().split(';') if len(s) > 0]])
         except:
             maxLen = overallLen
-        
+
         # Next line replaced due to language library restrictions where it can't handle standard substitution formatting?
         #self.lengthSummary.config(text=_('Overall %i, split maximum %i') % (overallLen, maxLen))
         self.lengthSummary.config(text=_('Overall ') + str(overallLen)  + _(', split maximum ') + str(maxLen))
@@ -235,12 +237,12 @@ if __name__=='__main__':
         language = defaults['language']
     else:
         language = None
-    
+
     liblang.init_language(sys.argv, sys.path, language)
     _ = liblang._
     lan = liblang.lan
     libautoflashgui.init_language(sys.argv, sys.path, language)
-    
+
     app = Application()
     appversion="16.02.2018"
     app.master.title(_('Technicolor modem flash/unlock utility (v. ') + appversion + _(') - By Mark Smith'))
